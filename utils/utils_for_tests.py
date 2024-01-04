@@ -18,7 +18,6 @@ def update_data(
 
 
 class TestUpdateData:
-
     @staticmethod
     def test_update_data():
         orig_data = {'a': 1, 'b': 2, 'c': 3}
