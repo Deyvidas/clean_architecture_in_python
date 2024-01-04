@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 class Batch(MyBaseModel):
     """Class that represents a batch of product."""
 
-    reference: str
     product_name: str
     purchased_quantity: int
     estimated_arrival_date: date
@@ -37,9 +36,7 @@ class Batch(MyBaseModel):
         # TODO WHAT MUST BE IF THE ORDER CAN'T BE ALLOCATED?
 
     def can_allocate(self, order: OrderLine) -> bool:
-        """Validate the order properties:
-
-        Verify if:
+        """Verify if:
         - the quantity ordered can be allocated from this batch;
         - the product_name in order coincide with product_name in Batch.
         """
@@ -50,4 +47,6 @@ class Batch(MyBaseModel):
 
     def deallocate(self, order: OrderLine) -> None:
         """Remove order from the allocations set."""
-        ...
+        if order not in self.allocations:
+            return
+        self.allocations.remove(order)
