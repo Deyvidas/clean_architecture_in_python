@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "made-com"
+version = "0.1.0"
+description = "An application for buying furniture."
+authors = ["Deyvidas <devidbanyavichyus@yandex.ru>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+black = "^23.12.1"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.4"
+
+
+[tool.poetry.group.prod.dependencies]
+pydantic = "^2.5.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
