@@ -29,16 +29,6 @@ def order_data(**kwargs) -> dict[str, Any]:
 
 class TestAllocation:
 
-    def test_available_quantity_is_reduced_after_allocation(self):
-        batch = Batch(**batch_data())
-        order = OrderLine(**order_data())
-
-        batch.allocate(order)
-
-        assert batch.purchased_quantity == 20
-        assert batch.available_quantity == 18
-        assert batch.allocated_quantity == 2
-
     @pytest.mark.parametrize(
         argnames='purchased,ordered,response',
         argvalues=(
@@ -91,6 +81,39 @@ class TestAllocation:
         order = OrderLine(**order_data(product_name=order_name))
 
         assert batch.can_allocate(order) is response
+
+    def test_batch_available_quantity_is_reduced_after_allocation(self):
+        batch_quantity = batch_data()['purchased_quantity']
+        order_quantity = order_data()['ordered_quantity']
+        batch = Batch(**batch_data())
+        order = OrderLine(**order_data())
+
+        batch.allocate(order)
+
+        assert batch.purchased_quantity == batch_quantity
+        assert batch.available_quantity == batch_quantity - order_quantity
+        assert batch.allocated_quantity == order_quantity
+
+    def test_allocate_order_with_quantity_gt_purchased(self):
+        batch = Batch(**batch_data(purchased_quantity=10))
+        order = OrderLine(**order_data(ordered_quantity=11))
+
+        batch.allocate(order)
+
+        assert batch.purchased_quantity == 10
+        assert batch.available_quantity == 10
+        assert batch.allocated_quantity == 0
+
+    def test_allocate_order_with_differ_product_name(self):
+        batch_quantity = batch_data()['purchased_quantity']
+        batch = Batch(**batch_data(product_name='SMALL-TABLE'))
+        order = OrderLine(**order_data(product_name='BEDSIDE-TABLE'))
+
+        batch.allocate(order)
+
+        assert batch.purchased_quantity == batch_quantity
+        assert batch.available_quantity == batch_quantity
+        assert batch.allocated_quantity == 0
 
 
 def test__deallocate__can_deallocate_only_allocated():
