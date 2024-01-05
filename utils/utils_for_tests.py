@@ -1,4 +1,13 @@
+import dataclasses
+
+from dataclasses import dataclass
 from typing import Any
+
+
+@dataclass(frozen=True, kw_only=True)
+class BaseData:
+    def asdict(self) -> dict[str, Any]:
+        return dataclasses.asdict(self)
 
 
 def update_data(
