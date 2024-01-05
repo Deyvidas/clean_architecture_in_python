@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from pydantic import Field
 
 from base.models import MyBaseModel
+from utils.exceptions import OutOfStock
 
 if TYPE_CHECKING:
     from order.models import OrderLine
@@ -22,9 +23,12 @@ def allocate(order: OrderLine, batches: list[Batch]) -> str:
     Returns:
         str: An ID for the most recent batch that satisfied the order.
     """
-    batch = next(b for b in sorted(batches) if b.can_allocate(order))
-    batch.allocate(order)
-    return batch.id
+    try:
+        batch = next(b for b in sorted(batches) if b.can_allocate(order))
+        batch.allocate(order)
+        return batch.id
+    except StopIteration:
+        raise OutOfStock(f'{order.product_name}')
 
 
 class Batch(MyBaseModel):
@@ -32,7 +36,7 @@ class Batch(MyBaseModel):
 
     product_name: str
     purchased_quantity: int
-    estimated_arrival_date: date = Field(default=None)
+    estimated_arrival_date: date | None = Field(default=None)
     _allocations: set[OrderLine] = set()
 
     def __gt__(self, other: Self) -> bool:

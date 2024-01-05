@@ -1,11 +1,14 @@
 from datetime import date
 from datetime import timedelta
 
+import pytest
+
 from batch.models import allocate
 from batch.models import Batch
 from batch.tests.utils import batch_data
 from batch.tests.utils import order_data
 from order.models import OrderLine
+from utils.exceptions import OutOfStock
 
 
 today = date.today()
@@ -15,14 +18,14 @@ later = today + timedelta(days=10)
 
 def test_priority_to_goods_in_stock():
     BatchDataInStock = batch_data(estimated_arrival_date=None)
-    BatchDataInTransit = batch_data(estimated_arrival_date=today)
+    BatchDataOrdered = batch_data(estimated_arrival_date=today)
     OrderData = order_data()
 
     batch_in_stock = Batch(**BatchDataInStock.asdict())
-    batch_in_transit = Batch(**BatchDataInTransit.asdict())
+    batch_ordered = Batch(**BatchDataOrdered.asdict())
     order = OrderLine(**OrderData.asdict())
 
-    allocate(order, [batch_in_transit, batch_in_stock])
+    allocate(order, [batch_ordered, batch_in_stock])
 
     assert batch_in_stock.allocations == set([order])
     assert batch_in_stock.allocated_quantity == OrderData.ordered_quantity
@@ -30,10 +33,10 @@ def test_priority_to_goods_in_stock():
         BatchDataInStock.purchased_quantity - OrderData.ordered_quantity
     )
 
-    assert batch_in_transit.allocations == set()
-    assert batch_in_transit.allocated_quantity == 0
-    assert batch_in_transit.available_quantity == (
-        BatchDataInTransit.purchased_quantity
+    assert batch_ordered.allocations == set()
+    assert batch_ordered.allocated_quantity == 0
+    assert batch_ordered.available_quantity == (
+        BatchDataOrdered.purchased_quantity
     )
 
 
@@ -61,13 +64,37 @@ def test_priority_to_earlier():
 
 def test_allocate_return_id_of_batch_where_order_is_allocated():
     BatchDataInStock = batch_data(estimated_arrival_date=None)
-    BatchDataInTransit = batch_data(estimated_arrival_date=later)
+    BatchDataOrdered = batch_data(estimated_arrival_date=later)
     OrderData = order_data()
 
     batch_in_stock = Batch(**BatchDataInStock.asdict())
-    batch_in_transit = Batch(**BatchDataInTransit.asdict())
+    batch_ordered = Batch(**BatchDataOrdered.asdict())
     order = OrderLine(**OrderData.asdict())
 
-    allocated_in_batch_id = allocate(order, [batch_in_transit, batch_in_stock])
+    allocated_in_batch_id = allocate(order, [batch_ordered, batch_in_stock])
 
     assert allocated_in_batch_id == BatchDataInStock.id
+
+
+def test_raises_out_of_stock_if_ordered_product_not_ordered_and_not_in_stock():
+    BatchDataInStock = batch_data(estimated_arrival_date=None)
+    BatchDataOrdered = batch_data(estimated_arrival_date=later)
+    OrderAllInStock = order_data(
+        ordered_quantity=BatchDataInStock.purchased_quantity,
+    )
+    OrderAllOrdered = order_data(
+        ordered_quantity=BatchDataOrdered.purchased_quantity,
+    )
+    OrderOutOfStock = order_data()
+
+    batch_in_stock = Batch(**BatchDataInStock.asdict())
+    batch_ordered = Batch(**BatchDataOrdered.asdict())
+    order_all_in_stock = OrderLine(**OrderAllInStock.asdict())
+    order_all_ordered = OrderLine(**OrderAllOrdered.asdict())
+    order_out_of_stock = OrderLine(**OrderOutOfStock.asdict())
+
+    allocate(order_all_in_stock, [batch_ordered, batch_in_stock])
+    allocate(order_all_ordered, [batch_in_stock, batch_ordered])
+
+    with pytest.raises(OutOfStock, match=order_out_of_stock.product_name):
+        allocate(order_out_of_stock, [batch_ordered, batch_in_stock])
