@@ -1,4 +1,13 @@
+import dataclasses
+
+from dataclasses import dataclass
 from typing import Any
+
+
+@dataclass(frozen=True, kw_only=True)
+class BaseData:
+    def asdict(self) -> dict[str, Any]:
+        return dataclasses.asdict(self)
 
 
 def update_data(
@@ -18,7 +27,6 @@ def update_data(
 
 
 class TestUpdateData:
-
     @staticmethod
     def test_update_data():
         orig_data = {'a': 1, 'b': 2, 'c': 3}
