@@ -70,10 +70,11 @@ class Batch(MyBaseModel):
         - the quantity ordered can be allocated from this batch;
         - the product_name in order coincide with product_name in Batch.
         """
-        return (
-            self.product_name == order.product_name
-            and self.available_quantity >= order.ordered_quantity
-        )
+        if self.product_name != order.product_name:
+            return False
+        if self.available_quantity < order.ordered_quantity:
+            return False
+        return True
 
     def deallocate(self, order: OrderLine) -> None:
         """Remove order from the allocated orders set."""
