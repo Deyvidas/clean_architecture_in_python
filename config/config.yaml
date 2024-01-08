@@ -7,12 +7,13 @@ postgresql:
     db_name: !!str 'made_com'
 
 sqla_engine_settings:
-    echo: !!bool true
-    pool_size: !!int 5
-    max_overflow: !!int 10
-    connect_args:
+    echo: !!bool true       # Optional: default=True
+    pool_size: !!int 5      # Optional: default=5
+    max_overflow: !!int 10  # Optional: default=10
+    create_db: !!bool true  # Optional: default=False (create db if not exists?)
+    connect_args:           # Optional: default=dict()
         options: !!str '-c timezone=utc'
 
 sqla_session_settings:
-    autoflush: !!bool true
-    expire_on_commit: !!bool false
+    autoflush: !!bool true          # Optional: default=True
+    expire_on_commit: !!bool false  # Optional: default=False

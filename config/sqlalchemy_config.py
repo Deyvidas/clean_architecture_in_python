@@ -1,26 +1,42 @@
 from typing import Any
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
 from pydantic import Field
 from sqlalchemy import Engine
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy_utils import create_database
+from sqlalchemy_utils import database_exists
 
 from config import config_dict
+from config.base_config import BaseConfig
 from config.postgresql_config import postgresql_config
 
 
-class EngineConfig(BaseModel):
+class EngineConfig(BaseConfig):
     url: str
     echo: bool | None = Field(default=True)
     pool_size: int | None = Field(default=5)
     max_overflow: int | None = Field(default=10)
+    create_db: bool | None = Field(default=False)
     connect_args: dict[str, Any] | None = Field(default_factory=dict)
 
     @property
     def engine(self) -> Engine:
-        return create_engine(**vars(self))
+        if self.create_db is True:
+            self.create_db_if_not_exists()
+
+        return create_engine(
+            url=self.url,
+            echo=self.echo,
+            pool_size=self.pool_size,
+            max_overflow=self.max_overflow,
+            connect_args=self.connect_args,
+        )
+
+    def create_db_if_not_exists(self):
+        """Check if the db with the url exists and create if not, else pass."""
+        if not database_exists(self.url):
+            create_database(self.url)
 
 
 engine_conf_dict = config_dict.get('sqla_engine_settings', dict())
@@ -28,14 +44,10 @@ db_url = postgresql_config.url
 engine_config = EngineConfig(url=db_url, **engine_conf_dict)
 
 
-class SessionConfig(BaseModel):
+class SessionConfig(BaseConfig):
     bind: Engine
     autoflush: bool | None = Field(default=True)
     expire_on_commit: bool | None = Field(default=False)
-
-    model_config = ConfigDict(
-        arbitrary_types_allowed=True,
-    )
 
     @property
     def session(self):

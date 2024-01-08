@@ -1,9 +1,8 @@
-from pydantic import BaseModel
-
 from config import config_dict
+from config.base_config import BaseConfig
 
 
-class PostgreSQLConfig(BaseModel):
+class PostgreSQLConfig(BaseConfig):
     """Model which represent PostgreSQL configuration."""
 
     dialect_driver: str
