@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Self
 from typing import TYPE_CHECKING
+from typing import Self
 
 from pydantic import Field
 
 from base.models import MyBaseModel
 from utils.exceptions import OutOfStock
+
 
 if TYPE_CHECKING:
     from order.models import OrderLine

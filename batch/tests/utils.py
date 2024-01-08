@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import uuid
-
 from dataclasses import dataclass
 from datetime import date
 
+from utils.default_factories import get_hex_uuid4
 from utils.utils_for_tests import BaseData
 from utils.utils_for_tests import update_data
 
 
 def batch_data(**kwargs) -> BatchData:
     data = {
-        'id': uuid.uuid4().hex,
+        'id': get_hex_uuid4(),
         'product_name': 'SMALL-TABLE',
         'purchased_quantity': 20,
         'estimated_arrival_date': date.today(),
@@ -22,7 +21,7 @@ def batch_data(**kwargs) -> BatchData:
 
 def order_data(**kwargs) -> OrderData:
     data = {
-        'id': uuid.uuid4().hex,
+        'id': get_hex_uuid4(),
         'product_name': 'SMALL-TABLE',
         'ordered_quantity': 2,
     }

@@ -1,12 +1,12 @@
-import uuid
-
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 
+from utils.default_factories import get_hex_uuid4
+
 
 class MyBaseModel(BaseModel):
-    id: str = Field(default_factory=lambda: uuid.uuid4().hex)
+    id: str = Field(default_factory=get_hex_uuid4)
 
     model_config = ConfigDict(
         frozen=True,

@@ -3,8 +3,8 @@ from datetime import timedelta
 
 import pytest
 
-from batch.models import allocate
 from batch.models import Batch
+from batch.models import allocate
 from batch.tests.utils import batch_data
 from batch.tests.utils import order_data
 from order.models import OrderLine
