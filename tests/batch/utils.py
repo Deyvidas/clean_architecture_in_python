@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-from utils.default_factories import get_hex_uuid4
-from utils.utils_for_tests import BaseData
-from utils.utils_for_tests import update_data
+from core.utils.default_factories import get_hex_uuid4
+from tests.utils import BaseData
+from tests.utils import update_data
 
 
 def batch_data(**kwargs) -> BatchData:

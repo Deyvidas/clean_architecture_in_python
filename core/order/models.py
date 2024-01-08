@@ -1,4 +1,4 @@
-from base.models import MyBaseModel
+from core.base.models import MyBaseModel
 
 
 class OrderLine(MyBaseModel):

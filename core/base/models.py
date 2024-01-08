@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 
-from utils.default_factories import get_hex_uuid4
+from core.utils.default_factories import get_hex_uuid4
 
 
 class MyBaseModel(BaseModel):

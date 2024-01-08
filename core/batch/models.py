@@ -6,12 +6,12 @@ from typing import Self
 
 from pydantic import Field
 
-from base.models import MyBaseModel
-from utils.exceptions import OutOfStock
+from core.base.models import MyBaseModel
+from core.utils.exceptions import OutOfStock
 
 
 if TYPE_CHECKING:
-    from order.models import OrderLine
+    from core.order.models import OrderLine
 
 
 def allocate(order: OrderLine, batches: list[Batch]) -> str:

@@ -3,12 +3,12 @@ from datetime import timedelta
 
 import pytest
 
-from batch.models import Batch
-from batch.models import allocate
-from batch.tests.utils import batch_data
-from batch.tests.utils import order_data
-from order.models import OrderLine
-from utils.exceptions import OutOfStock
+from core.batch.models import Batch
+from core.batch.models import allocate
+from core.order.models import OrderLine
+from core.utils.exceptions import OutOfStock
+from tests.batch.utils import batch_data
+from tests.batch.utils import order_data
 
 
 today = date.today()
