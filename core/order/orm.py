@@ -1,16 +1,27 @@
-from base import metadata
-from sqlalchemy import Column
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Table
+from typing import TYPE_CHECKING
 
-from core.utils.default_factories import get_hex_uuid4
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
+
+from core.base.orm import BaseOrm
+from core.base.orm import id_uuid
 
 
-order_line = Table(
-    'order_line',
-    metadata,
-    Column('id', String(32), primary_key=True, default=get_hex_uuid4),
-    Column('product_name', String(255), nullable=False),
-    Column('ordered_quantity', Integer, nullable=False),
-)
+if TYPE_CHECKING:
+    from core.batch.orm import BatchOrm
+
+
+class OrderLineOrm(BaseOrm):
+    __tablename__ = 'order_line'
+
+    id: Mapped[id_uuid]
+    product_name: Mapped[str] = mapped_column(nullable=False)
+    ordered_quantity: Mapped[int] = mapped_column(nullable=False)
+
+    _batch: Mapped['BatchOrm'] = relationship(
+        lazy='joined',
+        back_populates='_allocations',
+    )
+
+    _show_fields = ('id', 'product_name', 'ordered_quantity')
