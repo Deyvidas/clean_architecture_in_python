@@ -2,8 +2,8 @@ import pytest
 
 from core.batch.models import Batch
 from core.order.models import OrderLine
-from tests.batch.utils import batch_data
-from tests.batch.utils import order_data
+from tests.batch.conftest import batch_data
+from tests.order.conftest import order_data
 
 
 class TestAllocation:

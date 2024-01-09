@@ -7,8 +7,8 @@ from core.batch.models import Batch
 from core.batch.models import allocate
 from core.order.models import OrderLine
 from core.utils.exceptions import OutOfStock
-from tests.batch.utils import batch_data
-from tests.batch.utils import order_data
+from tests.batch.conftest import batch_data
+from tests.order.conftest import order_data
 
 
 today = date.today()
