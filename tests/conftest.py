@@ -5,7 +5,7 @@ from config.sqlalchemy_config import session_config
 from core.base.orm import BaseOrm
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def tables():
     metadata = BaseOrm.metadata
     engine = engine_config.engine
