@@ -1,4 +1,3 @@
-from typing import Annotated
 from typing import ClassVar
 
 from sqlalchemy.orm import DeclarativeBase
@@ -6,12 +5,8 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
 
-id_uuid = Annotated[str, mapped_column(primary_key=True, nullable=False)]
-id_int = Annotated[int, mapped_column(primary_key=True, autoincrement=True)]
-
-
 class BaseOrm(DeclarativeBase):
-    id: Mapped[id_uuid] | Mapped[id_int]
+    id: Mapped[str] = mapped_column(primary_key=True, nullable=False)
 
     _show_fields: ClassVar[tuple[str, ...]] = ('id',)
 

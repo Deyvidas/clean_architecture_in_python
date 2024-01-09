@@ -7,8 +7,6 @@ from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
 from core.base.orm import BaseOrm
-from core.base.orm import id_int
-from core.base.orm import id_uuid
 
 
 if TYPE_CHECKING:
@@ -18,7 +16,6 @@ if TYPE_CHECKING:
 class BatchOrm(BaseOrm):
     __tablename__ = 'batch'
 
-    id: Mapped[id_uuid]
     product_name: Mapped[str] = mapped_column(nullable=False)
     purchased_quantity: Mapped[int] = mapped_column(nullable=False)
     estimated_arrival_date: Mapped[date] = mapped_column(nullable=True)
