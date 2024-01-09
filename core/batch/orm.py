@@ -25,7 +25,8 @@ class BatchOrm(BaseOrm):
 
     _allocations: Mapped[set['OrderLineOrm']] = relationship(
         lazy='joined',
-        back_populates='_batch',
+        back_populates='batch',
+        collection_class=set,
     )
 
     _show_fields = (

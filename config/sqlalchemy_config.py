@@ -23,7 +23,7 @@ class EngineConfig(BaseConfig):
     @property
     def engine(self) -> Engine:
         if self.create_db is True:
-            self.create_db_if_not_exists()
+            self._create_db_if_not_exists()
 
         return create_engine(
             url=self.url,
@@ -33,7 +33,7 @@ class EngineConfig(BaseConfig):
             connect_args=self.connect_args,
         )
 
-    def create_db_if_not_exists(self):
+    def _create_db_if_not_exists(self):
         """Check if the db with the url exists and create if not, else pass."""
         if not database_exists(self.url):
             create_database(self.url)

@@ -6,10 +6,11 @@ from core.utils.default_factories import get_hex_uuid4
 
 
 class MyBaseModel(BaseModel):
-    id: str = Field(default_factory=get_hex_uuid4)
+    id: str | int = Field(default_factory=get_hex_uuid4)
 
     model_config = ConfigDict(
         frozen=True,
+        from_attributes=True,
     )
 
     def __hash__(self) -> int:
