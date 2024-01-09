@@ -23,12 +23,20 @@ autoflake:	## Delete all unused imports.
 		--ignore-init-module-imports \
 		${root}
 
-formating:	## Run make commands isort -> autoflake -> black.
+mypy_check:	## Make mypy checking.
+	poetry run mypy \
+		--python-executable python \
+		--strict \
+		${root}
+
+formating:	## Run make commands isort -> autoflake -> black -> mypy_check.
 	make isort
 	echo
 	make autoflake
 	echo
 	make black
+	echo
+	make mypy_check
 
 dependencies:	## Run script gen_requirements.sh that generate {type}_requirements.txt
 	sh ${root}/gen_requirements.sh
