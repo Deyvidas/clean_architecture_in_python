@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import date
 from typing import TYPE_CHECKING
 from typing import Self
@@ -22,14 +23,22 @@ def allocate(order: OrderLine, batches: list[Batch]) -> str:
         batches (list[Batch]): The list of batches that satisfy the order.
 
     Returns:
-        str: An ID for the most recent batch that satisfied the order.
+        str: An UUID for the most recent batch that satisfied the order.
     """
     try:
         batch = next(b for b in sorted(batches) if b.can_allocate(order))
-        batch.allocate(order)
-        return batch.id
     except StopIteration:
         raise OutOfStock(f'{order.product_name}')
+
+    if not isinstance(batch.id, str):
+        raise ValueError(f'Batch.id must be `str` not `{type(batch.id)}`.')
+
+    regex = r'^[\w\d]{32}$'
+    if re.fullmatch(regex, str(batch.id)) is None:
+        raise ValueError(f'Batch.id must be str(UUID), regex={repr(regex)}.')
+
+    batch.allocate(order)
+    return batch.id
 
 
 class Batch(MyBaseModel):
