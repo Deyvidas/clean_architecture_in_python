@@ -36,7 +36,7 @@ class OrderLineRepoSqlAlchemy(AbstractSqlAlchemyRepo):
     def model_to_orm(self, model: MyBaseModel) -> BaseOrm:
         if not isinstance(model, OrderLine):
             raise TypeError
-        kwargs = TypeAdapter(OrderLine).dump_python(model)
+        kwargs = model.model_dump()
         return OrderLineOrm(**kwargs)
 
     @override

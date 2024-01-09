@@ -6,11 +6,13 @@ from sqlalchemy.orm.session import Session
 from core.batch.models import Batch
 from core.batch.orm import BatchOrm
 from core.batch.repo import BatchRepoSqlAlchemy
+from core.order.models import OrderLine
 from tests.batch.conftest import batch_data
+from tests.order.conftest import order_data
 
 
 @pytest.mark.usefixtures('tables')
-def test_repository_add(session: Session):
+def test_add(session: Session):
     repo = BatchRepoSqlAlchemy(session)
     model = Batch(**batch_data().asdict())
 
@@ -34,7 +36,7 @@ def test_repository_add(session: Session):
 
 
 @pytest.mark.usefixtures('tables')
-def test_repository_get(session: Session):
+def test_get(session: Session):
     repo = BatchRepoSqlAlchemy(session)
     model = Batch(**batch_data().asdict())
     repo.add(model)
@@ -46,3 +48,20 @@ def test_repository_get(session: Session):
     assert first.product_name == model.product_name
     assert first.purchased_quantity == model.purchased_quantity
     assert first.estimated_arrival_date == model.estimated_arrival_date
+
+
+@pytest.mark.usefixtures('tables')
+def test_create_with_allocations(session: Session):
+    repo = BatchRepoSqlAlchemy(session)
+    batch = Batch(**batch_data().asdict())
+    order1 = OrderLine(**order_data().asdict())
+    order2 = OrderLine(**order_data().asdict())
+
+    batch.allocate(order1)
+    batch.allocate(order2)
+    repo.add(batch)
+
+    received = repo.get(id=batch.id)
+    assert len(received) == 1
+    assert isinstance(first := received[0], Batch)
+    assert first.allocations == set([order1, order2])
