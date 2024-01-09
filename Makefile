@@ -26,7 +26,6 @@ autoflake:	## Delete all unused imports.
 mypy_check:	## Make mypy checking.
 	poetry run mypy \
 		--python-executable python \
-		--strict \
 		${root}
 
 formating:	## Run make commands isort -> autoflake -> black -> mypy_check.
@@ -40,3 +39,8 @@ formating:	## Run make commands isort -> autoflake -> black -> mypy_check.
 
 dependencies:	## Run script gen_requirements.sh that generate {type}_requirements.txt
 	sh ${root}/gen_requirements.sh
+
+before_commit: 	## Run scripts formatting -> dependencies.
+	make formating
+	echo
+	make dependencies

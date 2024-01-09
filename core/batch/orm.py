@@ -37,11 +37,6 @@ class BatchOrm(BaseOrm):
 class AllocationOrm(BaseOrm):
     __tablename__ = 'allocation'
 
-    id: Mapped[id_int] = mapped_column(
-        primary_key=True,
-        autoincrement=True,
-        nullable=False,
-    )
     order_id: Mapped[str] = mapped_column(
         ForeignKey(column='order_line.id', ondelete='CASCADE'),
         nullable=False,

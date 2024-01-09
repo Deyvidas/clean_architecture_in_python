@@ -24,9 +24,9 @@ def test_repository_add(session: Session):
     stmt = select(BatchOrm).filter_by(id=model.id)
     orm = session.scalars(stmt).unique().all()
     assert len(orm) == 1
-    assert isinstance(orm := orm[0], BatchOrm)
+    assert isinstance(first := orm[0], BatchOrm)
 
-    received = TypeAdapter(Batch).validate_python(orm)
+    received = TypeAdapter(Batch).validate_python(first)
     assert added.id == received.id
     assert added.product_name == received.product_name
     assert added.purchased_quantity == received.purchased_quantity
@@ -41,8 +41,8 @@ def test_repository_get(session: Session):
 
     received = repo.get(id=model.id)
     assert len(received) == 1
-    assert isinstance(received := received[0], Batch)
-    assert received.id == model.id
-    assert received.product_name == model.product_name
-    assert received.purchased_quantity == model.purchased_quantity
-    assert received.estimated_arrival_date == model.estimated_arrival_date
+    assert isinstance(first := received[0], Batch)
+    assert first.id == model.id
+    assert first.product_name == model.product_name
+    assert first.purchased_quantity == model.purchased_quantity
+    assert first.estimated_arrival_date == model.estimated_arrival_date

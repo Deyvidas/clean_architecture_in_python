@@ -23,9 +23,9 @@ def test_repository_add(session: Session):
     stmt = select(OrderLineOrm).filter_by(id=model.id)
     orm = session.scalars(stmt).unique().all()
     assert len(orm) == 1
-    assert isinstance(orm := orm[0], OrderLineOrm)
+    assert isinstance(first := orm[0], OrderLineOrm)
 
-    received = TypeAdapter(OrderLine).validate_python(orm)
+    received = TypeAdapter(OrderLine).validate_python(first)
     assert added.id == received.id
     assert added.product_name == received.product_name
     assert added.ordered_quantity == received.ordered_quantity
@@ -39,7 +39,7 @@ def test_repository_get(session: Session):
 
     received = repo.get(id=model.id)
     assert len(received) == 1
-    assert isinstance(received := received[0], OrderLine)
-    assert received.id == model.id
-    assert received.product_name == model.product_name
-    assert received.ordered_quantity == model.ordered_quantity
+    assert isinstance(first := received[0], OrderLine)
+    assert first.id == model.id
+    assert first.product_name == model.product_name
+    assert first.ordered_quantity == model.ordered_quantity
