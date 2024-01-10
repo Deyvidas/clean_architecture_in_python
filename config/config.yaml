@@ -7,7 +7,7 @@ postgresql:
     db_name: !!str 'made_com'
 
 sqla_engine_settings:
-    echo: !!bool true       # Optional: default=True
+    echo: !!bool false      # Optional: default=True
     pool_size: !!int 5      # Optional: default=5
     max_overflow: !!int 10  # Optional: default=10
     create_db: !!bool true  # Optional: default=False (create db if not exists?)
