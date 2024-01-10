@@ -16,6 +16,7 @@ class MyBaseModel(BaseModel):
     model_config = ConfigDict(
         frozen=True,
         from_attributes=True,
+        extra='allow',
     )
 
     def __hash__(self) -> int:

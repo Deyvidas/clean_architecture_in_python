@@ -11,10 +11,11 @@ from tests.order.conftest import order_data
 
 @pytest.mark.usefixtures('tables')
 def test_add(session: Session):
-    repo = OrderLineRepoSqlAlchemy(session)
+    repo = OrderLineRepoSqlAlchemy(session, OrderLine, OrderLineOrm)
     model = OrderLine(**order_data().asdict())
 
     added = repo.add(model)
+    session.commit()
     assert isinstance(added, OrderLine)
     assert added.id == model.id
     assert added.product_name == model.product_name
@@ -33,9 +34,10 @@ def test_add(session: Session):
 
 @pytest.mark.usefixtures('tables')
 def test_get(session: Session):
-    repo = OrderLineRepoSqlAlchemy(session)
+    repo = OrderLineRepoSqlAlchemy(session, OrderLine, OrderLineOrm)
     model = OrderLine(**order_data().asdict())
     repo.add(model)
+    session.commit()
 
     received = repo.get(id=model.id)
     assert len(received) == 1

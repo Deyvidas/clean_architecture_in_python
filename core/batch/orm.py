@@ -1,7 +1,6 @@
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
@@ -20,10 +19,9 @@ class BatchOrm(BaseOrm):
     purchased_quantity: Mapped[int] = mapped_column(nullable=False)
     estimated_arrival_date: Mapped[date] = mapped_column(nullable=True)
 
-    _allocations: Mapped[set['OrderLineOrm']] = relationship(
+    allocations: Mapped[list['OrderLineOrm']] = relationship(
         lazy='joined',
         back_populates='batch',
-        collection_class=set,
     )
 
     _show_fields = (
@@ -32,18 +30,3 @@ class BatchOrm(BaseOrm):
         'purchased_quantity',
         'estimated_arrival_date',
     )
-
-
-class AllocationOrm(BaseOrm):
-    __tablename__ = 'allocation'
-
-    order_id: Mapped[str] = mapped_column(
-        ForeignKey(column='order_line.id', ondelete='CASCADE'),
-        nullable=False,
-    )
-    batch_id: Mapped[str] = mapped_column(
-        ForeignKey(column='batch.id', ondelete='CASCADE'),
-        nullable=False,
-    )
-
-    _show_fields = ('id', 'order_id', 'batch_id')

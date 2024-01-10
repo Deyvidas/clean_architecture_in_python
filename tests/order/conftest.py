@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import NotRequired
+from typing import TypedDict
+from typing import Unpack
 
 from core.utils.default_factories import get_hex_uuid4
 from tests.batch.conftest import batch_data
 from tests.utils import BaseData
 
 
-def order_data(**kwargs) -> OrderData:
+class OrderDataKwargs(TypedDict):
+    id: NotRequired[str]
+    product_name: NotRequired[str]
+    ordered_quantity: NotRequired[int]
+
+
+def order_data(**kwargs: Unpack[OrderDataKwargs]) -> OrderData:
     return OrderData(
         id=kwargs.get('id', get_hex_uuid4()),
         product_name=kwargs.get('product_name', batch_data().product_name),

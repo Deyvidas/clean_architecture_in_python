@@ -2,12 +2,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from typing import NotRequired
+from typing import TypedDict
+from typing import Unpack
 
 from core.utils.default_factories import get_hex_uuid4
 from tests.utils import BaseData
 
 
-def batch_data(**kwargs) -> BatchData:
+class BatchDataKwargs(TypedDict):
+    id: NotRequired[str]
+    product_name: NotRequired[str]
+    purchased_quantity: NotRequired[int]
+    estimated_arrival_date: NotRequired[date]
+
+
+def batch_data(**kwargs: Unpack[BatchDataKwargs]) -> BatchData:
     return BatchData(
         id=kwargs.get('id', get_hex_uuid4()),
         product_name=kwargs.get('product_name', 'SMALL-TABLE'),
