@@ -8,7 +8,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-black = "^23.12.1"
 
 
 [tool.poetry.group.test.dependencies]
@@ -17,6 +16,19 @@ pytest = "^7.4.4"
 
 [tool.poetry.group.prod.dependencies]
 pydantic = "^2.5.3"
+sqlalchemy = "^2.0.25"
+pyyaml = "^6.0.1"
+psycopg = {extras = ["binary"], version = "^3.1.17"}
+sqlalchemy-utils = "^0.41.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.12.1"
+isort = "^5.13.2"
+autoflake = "^2.2.1"
+types-pyyaml = "^6.0.12.12"
+mypy = "^1.8.0"
+types-sqlalchemy-utils = "^1.0.1"
 
 
 [build-system]

@@ -1,4 +1,4 @@
-from order.models import OrderLine
+from core.order.models import OrderLine
 
 
 OrderLine.model_rebuild()

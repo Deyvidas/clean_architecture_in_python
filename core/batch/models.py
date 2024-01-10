@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Self
 from typing import TYPE_CHECKING
+from typing import Self
 
 from pydantic import Field
+from pydantic import computed_field
 
-from base.models import MyBaseModel
-from utils.exceptions import OutOfStock
+from core.base.models import MyBaseModel
+from core.utils.exceptions import OutOfStock
+
 
 if TYPE_CHECKING:
-    from order.models import OrderLine
+    from core.order.models import OrderLine
 
 
 def allocate(order: OrderLine, batches: list[Batch]) -> str:
@@ -21,14 +23,15 @@ def allocate(order: OrderLine, batches: list[Batch]) -> str:
         batches (list[Batch]): The list of batches that satisfy the order.
 
     Returns:
-        str: An ID for the most recent batch that satisfied the order.
+        str: An UUID for the most recent batch that satisfied the order.
     """
     try:
         batch = next(b for b in sorted(batches) if b.can_allocate(order))
-        batch.allocate(order)
-        return batch.id
     except StopIteration:
         raise OutOfStock(f'{order.product_name}')
+
+    batch.allocate(order)
+    return batch.id
 
 
 class Batch(MyBaseModel):
@@ -37,7 +40,7 @@ class Batch(MyBaseModel):
     product_name: str
     purchased_quantity: int
     estimated_arrival_date: date | None = Field(default=None)
-    _allocations: set[OrderLine] = set()
+    _allocations: list[OrderLine] = list()
 
     def __gt__(self, other: Self) -> bool:
         # TODO WHAT MUST BE IF self.ead == other.ead == None.
@@ -47,8 +50,9 @@ class Batch(MyBaseModel):
             return True
         return self.estimated_arrival_date > other.estimated_arrival_date
 
+    @computed_field  # type: ignore[misc]
     @property
-    def allocations(self) -> set[OrderLine]:
+    def allocations(self) -> list[OrderLine]:
         return self._allocations
 
     @property
@@ -60,10 +64,16 @@ class Batch(MyBaseModel):
         return self.purchased_quantity - self.allocated_quantity
 
     def allocate(self, order: OrderLine) -> None:
-        """Add order to the allocations set."""
-        if self.can_allocate(order):
-            self._allocations.add(order)
-        # TODO WHAT MUST BE IF THE ORDER CAN'T BE ALLOCATED?
+        """Add order to the allocations list."""
+        if not self.can_allocate(order):
+            return  # TODO WHAT MUST BE IF THE ORDER CAN'T BE ALLOCATED?
+
+        try:
+            self._allocations.pop(self.allocations.index(order))
+        except ValueError:
+            pass
+        finally:
+            self._allocations.append(order)
 
     def can_allocate(self, order: OrderLine) -> bool:
         """Verify if:

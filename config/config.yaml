@@ -1,0 +1,19 @@
+postgresql:
+    dialect_driver: !!str 'postgresql+psycopg'
+    db_username: !!str 'postgres'
+    db_password: !!str 'postgres'
+    db_host: !!str 'localhost'
+    db_port: !!int 5432
+    db_name: !!str 'made_com'
+
+sqla_engine_settings:
+    echo: !!bool false      # Optional: default=True
+    pool_size: !!int 5      # Optional: default=5
+    max_overflow: !!int 10  # Optional: default=10
+    create_db: !!bool true  # Optional: default=False (create db if not exists?)
+    connect_args:           # Optional: default=dict()
+        options: !!str '-c timezone=utc'
+
+sqla_session_settings:
+    autoflush: !!bool true          # Optional: default=True
+    expire_on_commit: !!bool false  # Optional: default=False

@@ -1,15 +1,22 @@
-import uuid
+from typing import Annotated
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
 from pydantic import Field
 
+from core.utils.default_factories import get_hex_uuid4
+
+
+uuid = Annotated[str, Field(pattern=r'^[\d\w]{32}$', validate_default=True)]
+
 
 class MyBaseModel(BaseModel):
-    id: str = Field(default_factory=lambda: uuid.uuid4().hex)
+    id: uuid = Field(default_factory=get_hex_uuid4)
 
     model_config = ConfigDict(
         frozen=True,
+        from_attributes=True,
+        extra='allow',
     )
 
     def __hash__(self) -> int:

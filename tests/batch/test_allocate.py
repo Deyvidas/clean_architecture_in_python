@@ -3,12 +3,12 @@ from datetime import timedelta
 
 import pytest
 
-from batch.models import allocate
-from batch.models import Batch
-from batch.tests.utils import batch_data
-from batch.tests.utils import order_data
-from order.models import OrderLine
-from utils.exceptions import OutOfStock
+from core.batch.models import Batch
+from core.batch.models import allocate
+from core.order.models import OrderLine
+from core.utils.exceptions import OutOfStock
+from tests.batch.conftest import batch_data
+from tests.order.conftest import order_data
 
 
 today = date.today()
@@ -27,13 +27,13 @@ def test_priority_to_goods_in_stock():
 
     allocate(order, [batch_ordered, batch_in_stock])
 
-    assert batch_in_stock.allocations == set([order])
+    assert batch_in_stock.allocations == [order]
     assert batch_in_stock.allocated_quantity == OrderData.ordered_quantity
     assert batch_in_stock.available_quantity == (
         BatchDataInStock.purchased_quantity - OrderData.ordered_quantity
     )
 
-    assert batch_ordered.allocations == set()
+    assert batch_ordered.allocations == list()
     assert batch_ordered.allocated_quantity == 0
     assert batch_ordered.available_quantity == (
         BatchDataOrdered.purchased_quantity
@@ -51,13 +51,13 @@ def test_priority_to_earlier():
 
     allocate(order, [batch_later, batch_earlier])
 
-    assert batch_earlier.allocations == set([order])
+    assert batch_earlier.allocations == [order]
     assert batch_earlier.allocated_quantity == OrderData.ordered_quantity
     assert batch_earlier.available_quantity == (
         BatchDataEarlier.purchased_quantity - OrderData.ordered_quantity
     )
 
-    assert batch_later.allocations == set()
+    assert batch_later.allocations == list()
     assert batch_later.allocated_quantity == 0
     assert batch_later.available_quantity == BatchDataLater.purchased_quantity
 
