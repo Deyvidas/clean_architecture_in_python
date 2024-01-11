@@ -4,69 +4,112 @@ from pathlib import Path
 
 import pytest
 
+from sync_two_dirs.main import determine_actions
 from sync_two_dirs.main import sync
 
 
-@pytest.fixture
-def clean():
-    before = os.listdir('/tmp')
-    yield
-    after = os.listdir('/tmp')
-    to_delete = set(after) - set(before)
-    [os.popen(f'rm -rf /tmp/{d}') for d in to_delete]
+src_root = Path('/src')
+dst_root = Path('/dst')
 
 
-def test_when_a_file_has_added_in_source(clean):
-    source = Path(tempfile.mkdtemp())
-    source_file = source / 'useful'
-    dest = Path(tempfile.mkdtemp())
+class TestDetermineActions:
+    def test_when_a_file_has_added_in_source(self):
+        src_hashes = {'hash1': src_root / 'file'}
+        dst_hashes = {}
 
-    content = 'I\'m very useful file.'
-    source_file.write_text(content)
+        actions = determine_actions(
+            src_hashes=src_hashes,
+            dst_hashes=dst_hashes,
+            src_root=src_root,
+            dst_root=dst_root,
+        )
 
-    sync(source, dest)
+        assert list(actions) == [('COPY', src_hashes['hash1'], dst_root)]
 
-    expected_path = dest / source_file.name
-    assert expected_path.exists()
-    assert expected_path.read_text() == content
+    def test_when_a_file_has_been_renamed_in_source(self):
+        src_hashes = {'hash1': src_root / 'new_name'}
+        dst_hashes = {'hash1': dst_root / 'old_name'}
+
+        actions = determine_actions(
+            src_hashes=src_hashes,
+            dst_hashes=dst_hashes,
+            src_root=src_root,
+            dst_root=dst_root,
+        )
+
+        assert list(actions) == [
+            (
+                'RENAME',
+                dst_hashes['hash1'],
+                dst_root / src_hashes['hash1'].name,
+            )
+        ]
+
+    def test_when_a_file_was_deleted_from_source(self):
+        src_hashes = {}
+        dst_hashes = {'hash1': dst_root / 'file'}
+
+        actions = determine_actions(
+            src_hashes=src_hashes,
+            dst_hashes=dst_hashes,
+            src_root=src_root,
+            dst_root=dst_root,
+        )
+
+        assert list(actions) == [('DELETE', dst_hashes['hash1'])]
 
 
-def test_when_a_file_has_been_renamed_in_source(clean):
-    source = Path(tempfile.mkdtemp())
-    source_file = source / 'source_file'
-    dest = Path(tempfile.mkdtemp())
-    dest_file = dest / 'dest_file'
+@pytest.mark.usefixtures('clean')
+class TestSyncFunction:
+    def test_when_a_file_has_added_in_source(self):
+        source = Path(tempfile.mkdtemp())
+        source_file = source / 'useful'
+        dest = Path(tempfile.mkdtemp())
 
-    content = 'I\'m renamed file.'
-    source_file.write_text(content)
-    dest_file.write_text(content)
+        content = 'I\'m very useful file.'
+        source_file.write_text(content)
 
-    sync(source, dest)
+        sync(source, dest)
 
-    assert source_file.exists()
-    assert not dest_file.exists()
+        expected_path = dest / source_file.name
+        assert expected_path.exists()
+        assert expected_path.read_text() == content
 
-    expected_path = dest / source_file.name
-    assert expected_path.exists()
-    assert expected_path.read_text() == content
+    def test_when_a_file_has_been_renamed_in_source(self):
+        source = Path(tempfile.mkdtemp())
+        source_file = source / 'source_file'
+        dest = Path(tempfile.mkdtemp())
+        dest_file = dest / 'dest_file'
 
+        content = 'I\'m renamed file.'
+        source_file.write_text(content)
+        dest_file.write_text(content)
 
-def test_when_a_file_was_deleted_from_source(clean):
-    source = Path(tempfile.mkdtemp())
-    source_file = source / 'file_to_delete'
-    dest = Path(tempfile.mkdtemp())
-    dest_file = dest / 'file_to_delete'
+        sync(source, dest)
 
-    content = 'I\'m file that must be deleted.'
-    source_file.write_text(content)
-    dest_file.write_text(content)
+        assert source_file.exists()
+        assert not dest_file.exists()
 
-    while source_file.exists():
-        os.remove(str(source_file))
+        expected_path = dest / source_file.name
+        assert expected_path.exists()
+        assert expected_path.read_text() == content
 
-    assert not source_file.exists()
-    assert dest_file.exists()
+    def test_when_a_file_was_deleted_from_source(self):
+        source = Path(tempfile.mkdtemp())
+        source_file = source / 'file_to_delete'
+        dest = Path(tempfile.mkdtemp())
+        dest_file = dest / 'file_to_delete'
 
-    sync(source, dest)
+        content = 'I\'m file that must be deleted.'
+        source_file.write_text(content)
+        dest_file.write_text(content)
 
-    assert not dest_file.exists()
+        while source_file.exists():
+            os.remove(str(source_file))
+
+        assert not source_file.exists()
+        assert dest_file.exists()
+
+        sync(source, dest)
+
+        assert not dest_file.exists()

@@ -1,14 +1,10 @@
 import hashlib
 import os
-from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
-
-
-@dataclass(kw_only=True)
-class Result:
-    copy_from_source: list[str]
-    delete_from_dest: list[str]
-    rename_in_dest: list[str]
+from typing import Required
+from typing import TypedDict
+from typing import Unpack
 
 
 def hash_file(path: Path) -> str:
@@ -18,7 +14,7 @@ def hash_file(path: Path) -> str:
     return hasher.hexdigest()
 
 
-def get_hashes(path: Path) -> dict[str, Path]:
+def read_paths_and_hashes(path: Path) -> dict[str, Path]:
     hash_path = dict()
     for root, _, files in path.walk():
         for file in files:
@@ -35,9 +31,10 @@ def copy(file: Path, to_dir: Path) -> str:
 
 
 def delete(file: Path) -> str:
+    command = f'rm {file}'
     while file.exists():
-        os.remove(file)
-    return f'rm {file}'
+        os.popen(command)
+    return command
 
 
 def rename(old_path: Path, new_path: Path) -> str:
@@ -47,44 +44,59 @@ def rename(old_path: Path, new_path: Path) -> str:
     return command
 
 
-def sync(source: Path, dest: Path) -> Result:
-    source_hashes = get_hashes(source)
-    dest_hashes = get_hashes(dest)
+class DetermineActionsKwargs(TypedDict):
+    src_hashes: Required[dict[str, Path]]
+    dst_hashes: Required[dict[str, Path]]
+    src_root: Required[Path]
+    dst_root: Required[Path]
 
-    copy_from_source = set(source_hashes) - set(dest_hashes)
-    delete_from_dest = set(dest_hashes) - set(source_hashes)
-    rename_in_dest = set()
 
-    for hash, path in dest_hashes.items():
-        if hash in copy_from_source | delete_from_dest:
-            continue
-        if path.name == source_hashes[hash].name:
-            continue
-        rename_in_dest.add(hash)
+def determine_actions(**kwargs: Unpack[DetermineActionsKwargs]):
+    """Return actions that need to synchronize source with destination
 
-    result = Result(
-        copy_from_source=list(),
-        delete_from_dest=list(),
-        rename_in_dest=list(),
+    Args:
+        hashes: The key is a hash of the file on the path saved in the value;
+        root: The path of the root directory;
+
+    Yields:
+        tuple: Where the first is the name of an action, the remaining are arguments.
+    """
+
+    for src_hash, src_path in kwargs['src_hashes'].items():
+        # If the file is not in the destination directory.
+        if kwargs['dst_hashes'].get(src_hash, None) is None:
+            yield ('COPY', src_path, kwargs['dst_root'])
+
+        # If the file is in the destination directory but has a different name.
+        elif (dp := kwargs['dst_hashes'][src_hash]).name != src_path.name:
+            yield ('RENAME', dp, dp.parent / src_path.name)
+
+    # If the file is in the destination directory but not in the source directory.
+    extra_hashes = set(kwargs['dst_hashes']) - set(kwargs['src_hashes'])
+    for hash in extra_hashes:
+        yield ('DELETE', kwargs['dst_hashes'][hash])
+
+
+class ActionsEnum(Enum):
+    COPY = copy
+    DELETE = delete
+    RENAME = rename
+
+
+def sync(src_root: Path, dst_root: Path):
+    src_hashes = read_paths_and_hashes(src_root)
+    dst_hashes = read_paths_and_hashes(dst_root)
+
+    actions = determine_actions(
+        src_hashes=src_hashes,
+        dst_hashes=dst_hashes,
+        src_root=src_root,
+        dst_root=dst_root,
     )
 
-    for c in copy_from_source:
-        command = copy(source_hashes[c], dest)
-        result.copy_from_source.append(command)
-        print(command)
-
-    for d in delete_from_dest:
-        command = delete(dest_hashes[d])
-        result.delete_from_dest.append(command)
-        print(command)
-
-    for r in rename_in_dest:
-        old_path = dest_hashes[r]
-        new_path = old_path.parent / source_hashes[r].name
-        command = rename(old_path, new_path)
-        print(command)
-
-    return result
+    for action, *paths in actions:
+        function = getattr(ActionsEnum, action)
+        function(*paths)
 
 
 def main():

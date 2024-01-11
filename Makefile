@@ -28,10 +28,10 @@ mypy_check:	## Make mypy checking.
 		--python-executable python \
 		${root}
 
-formating:	## Run make commands isort -> autoflake -> black -> mypy_check.
-	make isort
-	echo
+formating:	## Run make commands autoflake -> isort -> black -> mypy_check.
 	make autoflake
+	echo
+	make isort
 	echo
 	make black
 	echo
