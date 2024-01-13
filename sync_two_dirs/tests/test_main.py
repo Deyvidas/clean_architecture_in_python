@@ -1,11 +1,11 @@
-import os
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from sync_two_dirs.main import determine_actions
 from sync_two_dirs.main import sync
+from sync_two_dirs.tests.conftest import create_file
+from sync_two_dirs.tests.conftest import create_tmp_dir
 
 
 src_root = Path('/src')
@@ -62,54 +62,37 @@ class TestDetermineActions:
 @pytest.mark.usefixtures('clean')
 class TestSyncFunction:
     def test_when_a_file_has_added_in_source(self):
-        source = Path(tempfile.mkdtemp())
-        source_file = source / 'useful'
-        dest = Path(tempfile.mkdtemp())
+        src_file_path, src_content = create_file('useful', 'I\'m useful file.')
+        dst_root = create_tmp_dir()
 
-        content = 'I\'m very useful file.'
-        source_file.write_text(content)
+        sync(src_file_path.parent, dst_root)
 
-        sync(source, dest)
-
-        expected_path = dest / source_file.name
+        expected_path = dst_root / src_file_path.name
         assert expected_path.exists()
-        assert expected_path.read_text() == content
+        assert expected_path.read_text() == src_content
 
     def test_when_a_file_has_been_renamed_in_source(self):
-        source = Path(tempfile.mkdtemp())
-        source_file = source / 'source_file'
-        dest = Path(tempfile.mkdtemp())
-        dest_file = dest / 'dest_file'
-
         content = 'I\'m renamed file.'
-        source_file.write_text(content)
-        dest_file.write_text(content)
+        src_file_path, src_content = create_file('renamed_file', content)
+        dst_file_path, _ = create_file('original_file', content)
 
-        sync(source, dest)
+        sync(src_file_path.parent, dst_file_path.parent)
 
-        assert source_file.exists()
-        assert not dest_file.exists()
+        assert src_file_path.exists()
+        assert not dst_file_path.exists()
 
-        expected_path = dest / source_file.name
+        expected_path = dst_file_path.parent / src_file_path.name
         assert expected_path.exists()
-        assert expected_path.read_text() == content
+        assert expected_path.read_text() == src_content
 
     def test_when_a_file_was_deleted_from_source(self):
-        source = Path(tempfile.mkdtemp())
-        source_file = source / 'file_to_delete'
-        dest = Path(tempfile.mkdtemp())
-        dest_file = dest / 'file_to_delete'
-
         content = 'I\'m file that must be deleted.'
-        source_file.write_text(content)
-        dest_file.write_text(content)
+        src_root = create_tmp_dir()
+        dst_file_path, dst_content = create_file('file_to_delete', content)
 
-        while source_file.exists():
-            os.remove(str(source_file))
+        assert not (src_root / dst_file_path.name).exists()
+        assert dst_file_path.exists()
 
-        assert not source_file.exists()
-        assert dest_file.exists()
+        sync(src_root, dst_file_path.parent)
 
-        sync(source, dest)
-
-        assert not dest_file.exists()
+        assert not dst_file_path.exists()
