@@ -15,6 +15,7 @@ python = "^3.12"
 pytest = "^7.4.4"
 pytest-dependency = "^0.6.0"
 pytest-order = "^1.2.0"
+polyfactory = "^2.13.0"
 
 
 [tool.poetry.group.prod.dependencies]
