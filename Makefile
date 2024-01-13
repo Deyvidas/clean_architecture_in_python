@@ -33,6 +33,7 @@ autoflake:	## Delete all unused imports.
 mypy_check:	## Make mypy checking.
 	poetry run mypy \
 		--python-executable python \
+		--check-untyped-defs \
 		${ROOT_DIR}
 
 formating:	## Run make commands autoflake -> isort -> black -> mypy_check.

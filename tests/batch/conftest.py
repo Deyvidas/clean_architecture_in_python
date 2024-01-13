@@ -14,7 +14,7 @@ class BatchDataKwargs(TypedDict):
     id: NotRequired[str]
     product_name: NotRequired[str]
     purchased_quantity: NotRequired[int]
-    estimated_arrival_date: NotRequired[date]
+    estimated_arrival_date: NotRequired[date | None]
 
 
 def batch_data(**kwargs: Unpack[BatchDataKwargs]) -> BatchData:
@@ -34,4 +34,4 @@ class BatchData(BaseData):
     id: str
     product_name: str
     purchased_quantity: int
-    estimated_arrival_date: date
+    estimated_arrival_date: date | None
