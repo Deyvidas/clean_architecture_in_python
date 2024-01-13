@@ -11,7 +11,7 @@ from tests.order.conftest import order_data
 
 @pytest.mark.usefixtures('tables')
 def test_add(session: Session):
-    repo = OrderLineRepoSqlAlchemy(session, OrderLine, OrderLineOrm)
+    repo = OrderLineRepoSqlAlchemy(session)
     model = OrderLine(**order_data().asdict())
 
     added = repo.add(model)
@@ -34,7 +34,7 @@ def test_add(session: Session):
 
 @pytest.mark.usefixtures('tables')
 def test_get(session: Session):
-    repo = OrderLineRepoSqlAlchemy(session, OrderLine, OrderLineOrm)
+    repo = OrderLineRepoSqlAlchemy(session)
     model = OrderLine(**order_data().asdict())
     repo.add(model)
     session.commit()
