@@ -1,7 +1,9 @@
 from abc import ABC
 from abc import abstractmethod
+from typing import Generic
 from typing import NotRequired
 from typing import TypedDict
+from typing import TypeVar
 from typing import Unpack
 
 from pydantic import TypeAdapter
@@ -15,42 +17,47 @@ class Filters(TypedDict):
     id: NotRequired[str]
 
 
-class AbstractRepo(ABC):
+BM = TypeVar('BM', bound=MyBaseModel)
+OM = TypeVar('OM', bound=BaseOrm)
+
+
+class AbstractRepo(ABC, Generic[BM]):
     """Interface for interacting with data storage."""
 
     @abstractmethod
-    def add(self, model: MyBaseModel) -> MyBaseModel:
+    def add(self, model: BM) -> BM:
         raise NotImplementedError
 
     @abstractmethod
-    def get(self, **filters: Unpack[Filters]) -> list[MyBaseModel]:
+    def get(self, **filters: Unpack[Filters]) -> list[BM]:
         raise NotImplementedError
 
 
-class AbstractSqlAlchemyRepo(AbstractRepo):
+class AbstractSqlAlchemyRepo(AbstractRepo[BM], Generic[BM, OM]):
     """Interface for interacting with db using SQLAlchemy framework."""
 
-    def __init__(
-        self,
-        session: Session,
-        model: type[MyBaseModel],
-        orm: type[BaseOrm],
-    ):
+    model: type[BM]
+    orm: type[OM]
+
+    def __init__(self, session: Session):
         self.session = session
-        self.model = model
-        self.orm = orm
 
-        self.sing_adapter = TypeAdapter(model)
-        self.many_adapter = TypeAdapter(list[model])  # type: ignore[valid-type]
+    @property
+    def single_adapter(self) -> TypeAdapter[BM]:
+        return TypeAdapter(self.model)
 
-    def model_to_orm(self, model: MyBaseModel) -> BaseOrm:
-        return self.orm(**self.sing_adapter.dump_python(model))
+    @property
+    def many_adapter(self) -> TypeAdapter[list[BM]]:
+        return TypeAdapter(list[self.model])  # type: ignore[name-defined]
 
-    def orm_to_model(self, orm: BaseOrm) -> MyBaseModel:
-        return self.sing_adapter.validate_python(orm)
+    def model_to_orm(self, model: BM) -> OM:
+        return self.orm(**self.single_adapter.dump_python(model))
 
-    def models_to_orms(self, models: list[MyBaseModel]) -> list[BaseOrm]:
+    def orm_to_model(self, orm: OM) -> BM:
+        return self.single_adapter.validate_python(orm)
+
+    def models_to_orms(self, models: list[BM]) -> list[OM]:
         return [self.model_to_orm(m) for m in models]
 
-    def orms_to_models(self, orms: list[BaseOrm]) -> list[MyBaseModel]:
+    def orms_to_models(self, orms: list[OM]) -> list[BM]:
         return [self.orm_to_model(o) for o in orms]

@@ -13,7 +13,7 @@ from tests.order.conftest import order_data
 
 @pytest.mark.usefixtures('tables')
 def test_add(session: Session):
-    repo = BatchRepoSqlAlchemy(session, Batch, BatchOrm)
+    repo = BatchRepoSqlAlchemy(session)
     model = Batch(**batch_data().asdict())
 
     added = repo.add(model)
@@ -38,7 +38,7 @@ def test_add(session: Session):
 
 @pytest.mark.usefixtures('tables')
 def test_get(session: Session):
-    repo = BatchRepoSqlAlchemy(session, Batch, BatchOrm)
+    repo = BatchRepoSqlAlchemy(session)
     model = Batch(**batch_data().asdict())
     repo.add(model)
     session.commit()
@@ -54,7 +54,7 @@ def test_get(session: Session):
 
 @pytest.mark.usefixtures('tables')
 def test_create_with_allocations(session: Session):
-    repo = BatchRepoSqlAlchemy(session, Batch, BatchOrm)
+    repo = BatchRepoSqlAlchemy(session)
     batch = Batch(**batch_data().asdict())
     order1 = OrderLine(**order_data().asdict())
     order2 = OrderLine(**order_data().asdict())

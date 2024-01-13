@@ -7,7 +7,7 @@ from pydantic import Field
 from core.utils.default_factories import get_hex_uuid4
 
 
-uuid = Annotated[str, Field(pattern=r'^[\d\w]{32}$', validate_default=True)]
+uuid = Annotated[str, Field(pattern=r'^[0-9a-z]{32}$', validate_default=True)]
 
 
 class MyBaseModel(BaseModel):
