@@ -15,25 +15,6 @@ if TYPE_CHECKING:
     from core.order.models import OrderLine
 
 
-def allocate(order: OrderLine, batches: list[Batch]) -> str:
-    """A certain quantity of product from an earlier batch is reserved for order.
-
-    Args:
-        order (OrderLine): The client order.
-        batches (list[Batch]): The list of batches that satisfy the order.
-
-    Returns:
-        str: An UUID for the most recent batch that satisfied the order.
-    """
-    try:
-        batch = next(b for b in sorted(batches) if b.can_allocate(order))
-    except StopIteration:
-        raise OutOfStock(f'{order.product_name}')
-
-    batch.allocate(order)
-    return batch.id
-
-
 class Batch(MyBaseModel):
     """Class that represents a batch of product."""
 
@@ -91,3 +72,22 @@ class Batch(MyBaseModel):
         if order in self.allocations:
             self.allocations.remove(order)
         # TODO WHAT MUST BE IF THE ORDER CAN'T BE DEALLOCATED?
+
+
+def allocate(order: OrderLine, batches: list[Batch]) -> str:
+    """A certain quantity of product from an earlier batch is reserved for order.
+
+    Args:
+        order (OrderLine): The client order.
+        batches (list[Batch]): The list of batches that satisfy the order.
+
+    Returns:
+        str: An UUID for the most recent batch that satisfied the order.
+    """
+    try:
+        batch = next(b for b in sorted(batches) if b.can_allocate(order))
+    except StopIteration:
+        raise OutOfStock(f'{order.product_name}')
+
+    batch.allocate(order)
+    return batch.id

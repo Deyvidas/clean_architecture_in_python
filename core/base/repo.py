@@ -5,8 +5,10 @@ from typing import NotRequired
 from typing import TypedDict
 from typing import TypeVar
 from typing import Unpack
+from typing import override
 
 from pydantic import TypeAdapter
+from sqlalchemy import select
 from sqlalchemy.orm.session import Session
 
 from core.base.models import MyBaseModel
@@ -33,7 +35,7 @@ class AbstractRepo(ABC, Generic[BM]):
         raise NotImplementedError
 
 
-class AbstractSqlAlchemyRepo(AbstractRepo[BM], Generic[BM, OM]):
+class BaseSqlAlchemyRepo(AbstractRepo[BM], Generic[BM, OM]):
     """Interface for interacting with db using SQLAlchemy framework."""
 
     model: type[BM]
@@ -41,6 +43,20 @@ class AbstractSqlAlchemyRepo(AbstractRepo[BM], Generic[BM, OM]):
 
     def __init__(self, session: Session):
         self.session = session
+
+    @override
+    def add(self, model: BM) -> BM:
+        orm = self.model_to_orm(model)
+        self.session.add(orm)
+        model = self.orm_to_model(orm)
+        return model
+
+    @override
+    def get(self, **filters: Unpack[Filters]) -> list[BM]:
+        stmt = select(self.orm).filter_by(**filters)
+        orms = self.session.scalars(stmt).unique().all()
+        models = self.orms_to_models(list(orms))
+        return models
 
     @property
     def single_adapter(self) -> TypeAdapter[BM]:
