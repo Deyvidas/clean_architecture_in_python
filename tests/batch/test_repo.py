@@ -6,15 +6,14 @@ from sqlalchemy.orm.session import Session
 from core.batch.models import Batch
 from core.batch.orm import BatchOrm
 from core.batch.repo import BatchRepoSqlAlchemy
-from core.order.models import OrderLine
-from tests.batch.conftest import batch_data
-from tests.order.conftest import order_data
+from tests.factories.batch import BatchFactory
+from tests.factories.order import OrderLineFactory
 
 
 @pytest.mark.usefixtures('tables')
-def test_add(session: Session):
+def test_add(session: Session, batch_factory: BatchFactory):
     repo = BatchRepoSqlAlchemy(session)
-    model = Batch(**batch_data().asdict())
+    model = batch_factory.generate_one()
 
     added = repo.add(model)
     session.commit()
@@ -37,9 +36,9 @@ def test_add(session: Session):
 
 
 @pytest.mark.usefixtures('tables')
-def test_get(session: Session):
+def test_get(session: Session, batch_factory: BatchFactory):
     repo = BatchRepoSqlAlchemy(session)
-    model = Batch(**batch_data().asdict())
+    model = batch_factory.generate_one()
     repo.add(model)
     session.commit()
 
@@ -53,18 +52,21 @@ def test_get(session: Session):
 
 
 @pytest.mark.usefixtures('tables')
-def test_create_with_allocations(session: Session):
+def test_create_with_allocations(
+    session: Session,
+    batch_factory: BatchFactory,
+    order_factory: OrderLineFactory,
+):
     repo = BatchRepoSqlAlchemy(session)
-    batch = Batch(**batch_data().asdict())
-    order1 = OrderLine(**order_data().asdict())
-    order2 = OrderLine(**order_data().asdict())
+    batch = batch_factory.generate_one()
+    orders = order_factory.generate_many(2, product_name=batch.product_name)
 
-    batch.allocate(order1)
-    batch.allocate(order2)
+    batch.allocate(orders[0])
+    batch.allocate(orders[1])
     repo.add(batch)
     session.commit()
 
     received = repo.get(id=batch.id)
     assert len(received) == 1
     assert isinstance(first := received[0], Batch)
-    assert first.allocations == [order1, order2]
+    assert first.allocations == orders

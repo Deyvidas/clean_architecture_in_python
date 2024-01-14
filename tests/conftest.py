@@ -8,6 +8,14 @@ import pytest
 from config.sqlalchemy_config import engine_config
 from config.sqlalchemy_config import session_config
 from core.base.orm import BaseOrm
+from tests.batch.conftest import batch_factory
+from tests.order.conftest import order_factory
+
+
+__all__ = [
+    'batch_factory',
+    'order_factory',
+]
 
 
 @pytest.fixture

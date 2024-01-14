@@ -6,13 +6,13 @@ from sqlalchemy.orm.session import Session
 from core.order.models import OrderLine
 from core.order.orm import OrderLineOrm
 from core.order.repo import OrderLineRepoSqlAlchemy
-from tests.order.conftest import order_data
+from tests.factories.order import OrderLineFactory
 
 
 @pytest.mark.usefixtures('tables')
-def test_add(session: Session):
+def test_add(session: Session, order_factory: OrderLineFactory):
     repo = OrderLineRepoSqlAlchemy(session)
-    model = OrderLine(**order_data().asdict())
+    model = order_factory.generate_one()
 
     added = repo.add(model)
     session.commit()
@@ -33,9 +33,9 @@ def test_add(session: Session):
 
 
 @pytest.mark.usefixtures('tables')
-def test_get(session: Session):
+def test_get(session: Session, order_factory: OrderLineFactory):
     repo = OrderLineRepoSqlAlchemy(session)
-    model = OrderLine(**order_data().asdict())
+    model = order_factory.generate_one()
     repo.add(model)
     session.commit()
 

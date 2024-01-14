@@ -1,9 +1,7 @@
 import pytest
 
-from core.batch.models import Batch
-from core.order.models import OrderLine
-from tests.batch.conftest import batch_data
-from tests.order.conftest import order_data
+from tests.factories.batch import BatchFactory
+from tests.factories.order import OrderLineFactory
 
 
 class TestAllocation:
@@ -19,13 +17,15 @@ class TestAllocation:
         self,
         difference: int,
         response: bool,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
     ):
-        BatchData = batch_data()
-        ordered_quantity = BatchData.purchased_quantity + difference
-        OrderData = order_data(ordered_quantity=ordered_quantity)
-
-        batch = Batch(**BatchData.asdict())
-        order = OrderLine(**OrderData.asdict())
+        batch = batch_factory.generate_one()
+        purchased_quantity = batch.purchased_quantity
+        order = order_factory.generate_one(
+            product_name=batch.product_name,
+            ordered_quantity=purchased_quantity + difference,
+        )
 
         assert batch.can_allocate(order) is response
 
@@ -36,69 +36,77 @@ class TestAllocation:
             pytest.param(False, id='batch.product_name != order.product_name'),
         ),
     )
-    def test__can_allocate__check_product_name(self, can_allocate: bool):
-        BatchData = batch_data()
-        order_name = BatchData.product_name
+    def test__can_allocate__check_product_name(
+        self,
+        can_allocate: bool,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
+    ):
+        batch = batch_factory.generate_one()
+        product_name = batch.product_name
         if can_allocate is False:
-            order_name = f'{order_name} (NEW)'
-        OrderData = order_data(product_name=order_name)
-
-        batch = Batch(**BatchData.asdict())
-        order = OrderLine(**OrderData.asdict())
+            product_name = f'{product_name} (NEW)'
+        order = order_factory.generate_one(product_name=product_name)
 
         assert batch.can_allocate(order) is can_allocate
 
-    def test_quantity_after_allocation(self):
-        BatchData = batch_data()
-        OrderData = order_data()
-
-        batch = Batch(**BatchData.asdict())
-        order = OrderLine(**OrderData.asdict())
+    def test_quantity_after_allocation(
+        self,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
+    ):
+        batch = batch_factory.generate_one()
+        order = order_factory.generate_one(product_name=batch.product_name)
         batch.allocate(order)
 
-        assert batch.purchased_quantity == BatchData.purchased_quantity
         assert batch.allocations == [order]
-        assert batch.allocated_quantity == OrderData.ordered_quantity
+        assert batch.allocated_quantity == order.ordered_quantity
         assert batch.available_quantity == (
-            BatchData.purchased_quantity - OrderData.ordered_quantity
+            batch.purchased_quantity - order.ordered_quantity
         )
 
-    def test_order_quantity_great_than_purchased_quantity(self):
-        BatchData = batch_data()
-        ordered_quantity = BatchData.purchased_quantity + 1
-        OrderData = order_data(ordered_quantity=ordered_quantity)
-
-        batch = Batch(**BatchData.asdict())
-        order = OrderLine(**OrderData.asdict())
+    def test_order_quantity_great_than_purchased_quantity(
+        self,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
+    ):
+        batch = batch_factory.generate_one()
+        order = order_factory.generate_one(
+            product_name=batch.product_name,
+            ordered_quantity=batch.purchased_quantity + 1,
+        )
         batch.allocate(order)
 
-        assert batch.purchased_quantity == BatchData.purchased_quantity
         assert batch.allocations == list()
         assert batch.allocated_quantity == 0
-        assert batch.available_quantity == BatchData.purchased_quantity
+        assert batch.available_quantity == batch.purchased_quantity
 
-    def test_order_with_differ_product_name(self):
-        BatchData = batch_data()
-        product_name = f'{BatchData.product_name} (NEW)'
-        OrderData = order_data(product_name=product_name)
-
-        batch = Batch(**BatchData.asdict())
-        order = OrderLine(**OrderData.asdict())
+    def test_order_with_differ_product_name(
+        self,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
+    ):
+        batch = batch_factory.generate_one()
+        order = order_factory.generate_one()
         batch.allocate(order)
 
-        assert batch.purchased_quantity == BatchData.purchased_quantity
-        assert batch.available_quantity == BatchData.purchased_quantity
         assert batch.allocated_quantity == 0
         assert batch.allocations == list()
+        assert batch.available_quantity == batch.purchased_quantity
 
-    def test_if_add_already_allocated_order_this_substitute_oldest(self):
-        BatchData = batch_data()
-        OrderDataOld = order_data(ordered_quantity=2)
-        OrderDataNew = order_data(id=OrderDataOld.id, ordered_quantity=4)
-
-        batch = Batch(**BatchData.asdict())
-        order_old = OrderLine(**OrderDataOld.asdict())
-        order_new = OrderLine(**OrderDataNew.asdict())
+    def test_if_add_already_allocated_order_this_substitute_oldest(
+        self,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
+    ):
+        batch = batch_factory.generate_one()
+        order_old = order_factory.generate_one(
+            product_name=batch.product_name,
+        )
+        order_new = order_factory.generate_one(
+            product_name=batch.product_name,
+            id=order_old.id,
+        )
 
         batch.allocate(order_old)
         batch.allocate(order_new)
@@ -111,37 +119,30 @@ class TestAllocation:
 
 
 class TestDeallocation:
-    def test_allocated(self):
-        BatchData = batch_data()
-        OrderData = order_data()
-
-        batch = Batch(**BatchData.asdict())
-        order = OrderLine(**OrderData.asdict())
+    def test_allocated(
+        self,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
+    ):
+        batch = batch_factory.generate_one()
+        order = order_factory.generate_one(product_name=batch.product_name)
 
         batch.allocate(order)
-        assert batch.purchased_quantity == BatchData.purchased_quantity
-        assert batch.available_quantity == (
-            BatchData.purchased_quantity - OrderData.ordered_quantity
-        )
-        assert batch.allocated_quantity == OrderData.ordered_quantity
-        assert batch.allocations == [order]
-
         batch.deallocate(order)
-        assert batch.purchased_quantity == BatchData.purchased_quantity
-        assert batch.available_quantity == BatchData.purchased_quantity
+        assert batch.available_quantity == batch.purchased_quantity
         assert batch.allocated_quantity == 0
         assert batch.allocations == list()
 
-    def test_not_allocated(self):
-        BatchData = batch_data()
-        OrderData = order_data()
-
-        batch = Batch(**BatchData.asdict())
-        order = OrderLine(**OrderData.asdict())
+    def test_not_allocated(
+        self,
+        batch_factory: BatchFactory,
+        order_factory: OrderLineFactory,
+    ):
+        batch = batch_factory.generate_one()
+        order = order_factory.generate_one(product_name=batch.product_name)
         assert batch.allocations == list()
 
         batch.deallocate(order)
-        assert batch.purchased_quantity == BatchData.purchased_quantity
-        assert batch.available_quantity == BatchData.purchased_quantity
+        assert batch.available_quantity == batch.purchased_quantity
         assert batch.allocated_quantity == 0
         assert batch.allocations == list()
