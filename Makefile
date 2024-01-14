@@ -54,3 +54,10 @@ before_commit: 	## Run scripts formatting -> run tests -> dependencies.
 	poetry run pytest ${ROOT_DIR}
 	echo
 	make dependencies
+
+run_app:	## Run fastapi application.
+	poetry run uvicorn \
+		--host localhost \
+		--port 8000 \
+		--reload \
+		api.v1.root:api_v1
