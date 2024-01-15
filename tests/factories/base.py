@@ -9,11 +9,16 @@ from core.base.repo import BM
 
 def check_kwargs(function: Callable):
     def wrap(*args, **kwargs):
-        model_fields = args[0].__model__.model_fields
+        model_fields = (model := args[0].__model__).model_fields
         extra = set(kwargs) - set(model_fields)
         if extra == set():
             return function(*args, **kwargs)
-        raise AttributeError(f'Passed extra attributes [{', '.join(extra)}].')
+        raise AttributeError(
+            'Model [{model}] doesn\'t have attributes [{attrs}].'.format(
+                model=model.__name__,
+                attrs=', '.join(extra),
+            )
+        )
 
     return wrap
 
